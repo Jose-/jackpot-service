@@ -119,7 +119,7 @@ public class BetEntity {
         status = BetStatus.PROCESSING_FAILED;
         this.failureCode = failureCode;
         this.failureMessage = failureMessage;
-        failedAt = now;
+        this.failedAt = now;
         updatedAt = now;
     }
 
