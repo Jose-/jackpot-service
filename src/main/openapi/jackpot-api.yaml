@@ -1,0 +1,235 @@
+openapi: 3.0.3
+info:
+  title: Jackpot Service API
+  version: 1.0.0
+  description: API for publishing bets and evaluating jackpot rewards.
+servers:
+  - url: /
+    description: Running application
+tags:
+  - name: Bets
+  - name: Rewards
+paths:
+  /api/v1/bets:
+    post:
+      tags:
+        - Bets
+      operationId: publishBet
+      summary: Publish a bet for asynchronous jackpot contribution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishBetRequest'
+            examples:
+              fixedJackpotBet:
+                $ref: '#/components/examples/FixedJackpotBet'
+      responses:
+        '202':
+          description: Bet accepted for publication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BetAcceptedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /api/v1/bets/{betId}/evaluation:
+    post:
+      tags:
+        - Rewards
+      operationId: evaluateJackpotReward
+      summary: Return or perform a contributing bet's jackpot reward evaluation
+      parameters:
+        - $ref: '#/components/parameters/BetId'
+      responses:
+        '200':
+          description: Persisted reward evaluation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardEvaluationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+components:
+  parameters:
+    BetId:
+      name: betId
+      in: path
+      required: true
+      description: Bet identifier
+      schema:
+        type: string
+        format: uuid
+      example: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+  responses:
+    BadRequest:
+      description: Request validation failed
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Requested resource was not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Request conflicts with current state
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    ServiceUnavailable:
+      description: Bet publication is temporarily unavailable
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  examples:
+    FixedJackpotBet:
+      summary: Bet targeting the seeded fixed-policy jackpot
+      value:
+        betId: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+        userId: bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
+        jackpotId: 11111111-1111-1111-1111-111111111111
+        betAmount: 10.00
+  schemas:
+    PublishBetRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - betId
+        - userId
+        - jackpotId
+        - betAmount
+      properties:
+        betId:
+          type: string
+          format: uuid
+          example: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+        userId:
+          type: string
+          format: uuid
+          example: bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
+        jackpotId:
+          type: string
+          format: uuid
+          example: 11111111-1111-1111-1111-111111111111
+        betAmount:
+          type: number
+          minimum: 0.01
+          maximum: 99999999999999999.99
+          multipleOf: 0.01
+          example: 10.00
+    BetAcceptedResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - betId
+        - status
+      properties:
+        betId:
+          type: string
+          format: uuid
+          example: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+        status:
+          type: string
+          enum:
+            - PENDING_PUBLICATION
+            - PUBLICATION_RECOVERY
+            - PUBLICATION_ACKNOWLEDGED
+            - SIMULATED
+            - CONTRIBUTED
+            - PUBLICATION_FAILED
+            - PROCESSING_FAILED
+          example: PUBLICATION_ACKNOWLEDGED
+    RewardEvaluationResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - betId
+        - userId
+        - jackpotId
+        - won
+        - calculatedChance
+        - generatedDraw
+        - createdAt
+      properties:
+        betId:
+          type: string
+          format: uuid
+          example: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+        userId:
+          type: string
+          format: uuid
+          example: bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
+        jackpotId:
+          type: string
+          format: uuid
+          example: 11111111-1111-1111-1111-111111111111
+        won:
+          type: boolean
+          example: false
+        calculatedChance:
+          type: number
+          minimum: 0
+          maximum: 100
+          multipleOf: 0.0001
+          example: 2.5000
+        generatedDraw:
+          type: number
+          minimum: 0
+          exclusiveMaximum: true
+          maximum: 100
+          multipleOf: 0.0001
+          example: 35.1234
+        rewardAmount:
+          type: number
+          nullable: true
+          minimum: 0.00000001
+          multipleOf: 0.00000001
+          example: 1001.00010000
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-06-12T10:16:00Z'
+    Problem:
+      type: object
+      additionalProperties: true
+      required:
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          default: about:blank
+          example: about:blank
+        title:
+          type: string
+          example: Resource not found
+        status:
+          type: integer
+          format: int32
+          minimum: 400
+          maximum: 599
+          example: 404
+        detail:
+          type: string
+          example: The bet has not contributed to a jackpot yet.
+        instance:
+          type: string
+          format: uri
+          example: /api/v1/bets/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/evaluation
