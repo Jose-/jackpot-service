@@ -3,6 +3,10 @@ spring:
     console:
       enabled: true
       path: /h2-console
+  kafka:
+    producer:
+      properties:
+        "[max.block.ms]": 1000
 
 jackpot:
   messaging:

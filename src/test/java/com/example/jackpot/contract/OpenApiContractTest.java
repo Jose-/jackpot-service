@@ -77,7 +77,7 @@ class OpenApiContractTest {
         assertThat(property(request, "betAmount").getMinimum()).isEqualByComparingTo("0.01");
         assertThat(property(request, "betAmount").getMaximum()).isNotNull();
         assertThat(property(request, "betAmount").getMultipleOf()).isEqualByComparingTo("0.01");
-        assertThat(contractText()).contains("maximum: 99999999999999999.99");
+        assertThat(contractText()).contains("maximum: 99999999.99");
 
         assertThat(openApi.getComponents().getExamples()).containsKey("FixedJackpotBet");
     }

@@ -32,7 +32,7 @@ class MoneyTest {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new Money(new BigDecimal("-1")))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new Money(new BigDecimal("100000000000000000.00")))
+        assertThatThrownBy(() -> new Money(new BigDecimal("100000000.00")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("precision");
     }
