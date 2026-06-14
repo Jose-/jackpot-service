@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: jackpot-service
+  datasource:
+    url: jdbc:h2:mem:jackpot;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+  h2:
+    console:
+      enabled: false
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: jackpot-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        "[spring.json.trusted.packages]": com.example.jackpot.bet.messaging
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+jackpot:
+  seed:
+    jackpots:
+      - id: 11111111-1111-1111-1111-111111111111
+        name: Fixed jackpot
+        initial-pool-amount: 1000
+        contribution:
+          strategy: FIXED
+          fixed:
+            rate-percentage: 5
+        reward:
+          strategy: FIXED
+          fixed:
+            win-probability-percentage: 2.5
+      - id: 22222222-2222-2222-2222-222222222222
+        name: Variable jackpot
+        initial-pool-amount: 1000
+        contribution:
+          strategy: VARIABLE
+          variable:
+            initial-rate-percentage: 5
+            rate-decrease-per-interval-percentage-points: 0.5
+            pool-growth-interval-amount: 100
+            minimum-rate-percentage: 1
+        reward:
+          strategy: VARIABLE
+          variable:
+            initial-win-probability-percentage: 1
+            win-probability-increase-per-interval-percentage-points: 0.5
+            pool-growth-interval-amount: 100
+            guaranteed-win-pool-amount: 10000
+  messaging:
+    mode: kafka
+    topic: jackpot-bets
+    dlt-suffix: .DLT
+    partitions: 3
+    replication-factor: 1
+    retry-interval-ms: 1000
+    max-retries: 3
+    recovery-interval-ms: 30000
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    url: /openapi/jackpot-api.yaml

@@ -1,0 +1,3 @@
+jackpot:
+  messaging:
+    mode: log

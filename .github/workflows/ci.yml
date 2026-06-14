@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Verify
+        run: ./mvnw clean verify
+
+      - name: Assert generated API contracts
+        run: |
+          test -f target/generated-sources/openapi/src/main/java/com/example/jackpot/generated/api/BetsApi.java
+          test -f target/generated-sources/openapi/src/main/java/com/example/jackpot/generated/api/RewardsApi.java
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: target/surefire-reports
+          if-no-files-found: ignore
